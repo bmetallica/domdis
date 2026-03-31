@@ -45,6 +45,18 @@ const Widgets = (function () {
       { id: 'shutter', label: 'Jalousie',  icon: '🪟' },
       { id: 'minimal', label: 'Minimal',   icon: '▬' }
     ],
+    contact: [
+      { id: 'card',    label: 'Karte',   icon: '▣' },
+      { id: 'minimal', label: 'Minimal', icon: '▬' }
+    ],
+    motion: [
+      { id: 'card',    label: 'Karte',   icon: '▣' },
+      { id: 'minimal', label: 'Minimal', icon: '▬' }
+    ],
+    button: [
+      { id: 'card',  label: 'Karte', icon: '▣' },
+      { id: 'large', label: 'Groß',  icon: '⬛' }
+    ],
     scene: [
       { id: 'card',  label: 'Karte',       icon: '▣' },
       { id: 'large', label: 'Groß',        icon: '⬛' }
@@ -84,21 +96,48 @@ const Widgets = (function () {
     if (sub.includes('rgb') || sub.includes('ww')) return 'rgb';
     if (type.includes('thermostat') || sub.includes('setpoint')) return 'thermostat';
     if (sub === 'kwh' || type.includes('p1 smart meter') || type.includes('youless') || sub.includes('energy')) return 'energy';
+    if (swType.includes('door contact'))                              return 'contact';
+    if (swType === 'contact')                                         return 'contact';
+    if (swType.includes('motion sensor') || swType === 'motion')     return 'motion';
+    if (swType.includes('push on') || swType.includes('push off'))   return 'button';
     if (type.includes('temp') || type.includes('humidity') || type.includes('wind') ||
-        type.includes('rain') || type.includes('uv') || type.includes('baro')) return 'sensor';
+        type.includes('rain') || type.includes('uv') || type.includes('baro') ||
+        type.includes('lux') || type.includes('air quality') || type.includes('rfxmeter')) return 'sensor';
     if (type.includes('light') || type.includes('switch')) return 'switch';
     return 'sensor';
   }
 
-  function getIcon(wType, deviceType) {
-    const map = { switch:'💡', dimmer:'🔆', rgb:'🌈', blinds:'🪟', thermostat:'🌡', scene:'🎬', energy:'⚡', camera:'📷', sensor:'📊' };
-    const dt = (deviceType || '').toLowerCase();
-    if (dt.includes('temp')) return '🌡';
-    if (dt.includes('hum'))  return '💧';
-    if (dt.includes('wind')) return '💨';
-    if (dt.includes('rain')) return '🌧';
-    if (dt.includes('uv'))   return '☀️';
-    if (dt.includes('baro')) return '🔵';
+  function getIcon(wType, deviceType, subType, switchType) {
+    const map = {
+      switch:'💡', dimmer:'🔆', rgb:'🌈', blinds:'🪟', thermostat:'🌡',
+      scene:'🎬', energy:'⚡', camera:'📷', sensor:'📊',
+      contact:'🚪', motion:'🏃', button:'🔘'
+    };
+    const dt = (deviceType  || '').toLowerCase();
+    const st = (subType     || '').toLowerCase();
+    const sw = (switchType  || '').toLowerCase();
+    // SwitchType-based (most specific)
+    if (sw.includes('door contact'))              return '🚪';
+    if (sw === 'contact')                         return '💧';
+    if (sw.includes('motion sensor'))             return '🏃';
+    if (sw.includes('push on') || sw.includes('push off')) return '🔘';
+    // Device Type-based
+    if (dt.includes('temp'))                      return '🌡';
+    if (dt.includes('hum'))                       return '💧';
+    if (dt.includes('wind'))                      return '💨';
+    if (dt.includes('rain'))                      return '🌧';
+    if (dt.includes('uv'))                        return '☀️';
+    if (dt.includes('baro'))                      return '🔵';
+    if (dt.includes('lux'))                       return '☀️';
+    if (dt.includes('air quality'))               return '🌬️';
+    if (dt.includes('rfxmeter'))                  return '💧';
+    // SubType-based (for General devices)
+    if (st.includes('voc'))                       return '🌬️';
+    if (st === 'percentage')                      return '🔋';
+    if (st === 'voltage')                         return '🔌';
+    if (st === 'distance')                        return '📏';
+    if (st.includes('custom sensor'))             return '🌫️';
+    if (st === 'gas')                             return '🔥';
     return map[wType] || '📟';
   }
 
@@ -120,6 +159,12 @@ const Widgets = (function () {
       return el;
     }
 
+    // Auto-upgrade legacy 'switch' widgets that are really contact/motion/button
+    if (wType === 'switch') {
+      const real = classifyDevice(deviceState);
+      if (real === 'contact' || real === 'motion' || real === 'button') wType = real;
+    }
+
     let el;
     switch (wType) {
       case 'switch':     el = renderSwitch(widget, deviceState, dType);     break;
@@ -129,6 +174,9 @@ const Widgets = (function () {
       case 'thermostat': el = renderThermostat(widget, deviceState, dType); break;
       case 'scene':      el = renderScene(widget, deviceState, dType);      break;
       case 'energy':     el = renderEnergy(widget, deviceState, dType);     break;
+      case 'contact':    el = renderContact(widget, deviceState, dType);    break;
+      case 'motion':     el = renderMotion(widget, deviceState, dType);     break;
+      case 'button':     el = renderButton(widget, deviceState, dType);     break;
       default:           el = renderSensor(widget, deviceState, dType);     break;
     }
     applySize(el, widget.size);
@@ -150,7 +198,7 @@ const Widgets = (function () {
   function renderSwitch(widget, state, dType) {
     const isOn = state.Status === 'On';
     const el   = makeEl(widget, isOn ? 'on' : 'off');
-    const icon = getIcon('switch', state.Type);
+    const icon = getIcon('switch', state.Type, state.SubType, state.SwitchType);
 
     if (dType === 'button') {
       el.classList.add('widget-btn-style');
@@ -313,7 +361,7 @@ const Widgets = (function () {
   // ══════════════════════════════════════════════════════════════
   function renderSensor(widget, state, dType) {
     const el   = makeEl(widget, 'sensor');
-    const icon = getIcon('sensor', state.Type);
+    const icon = getIcon('sensor', state.Type, state.SubType, state.SwitchType);
     const lines = buildSensorLines(state);
 
     if (dType === 'gauge') {
@@ -615,6 +663,78 @@ const Widgets = (function () {
         img.src = base + '?t=' + t;
       }, 5000);
     }
+    return el;
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // CONTACT (Tür/Fenster/Flood-Sensoren) — read-only
+  // ══════════════════════════════════════════════════════════════
+  function renderContact(widget, state, dType) {
+    const isOpen  = state.Status === 'Open' || state.Status === 'On';
+    const sw      = (state.SwitchType || '').toLowerCase();
+    const isDoor  = sw.includes('door');
+    const icon    = isOpen ? (isDoor ? '🚪' : '💧') : (isDoor ? '🔒' : '✅');
+    const label   = isOpen ? (isDoor ? 'OFFEN' : 'ALARM') : (isDoor ? 'GESCHLOSSEN' : 'OK');
+    const el      = makeEl(widget, isOpen ? 'on contact-widget' : 'contact-widget');
+
+    if (dType === 'minimal') {
+      el.classList.add('widget-minimal');
+      el.innerHTML = `
+        <span class="widget-name">${widget.deviceName}</span>
+        <span class="mini-status ${isOpen ? 'contact-open' : 'contact-closed'}">${label}</span>`;
+    } else {
+      el.innerHTML = `
+        <div class="widget-icon">${icon}</div>
+        <div class="widget-name">${widget.deviceName}</div>
+        <div class="widget-value ${isOpen ? 'contact-open' : 'contact-closed'}">${label}</div>`;
+    }
+    return el; // read-only — no click handler
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // MOTION SENSOR — read-only
+  // ══════════════════════════════════════════════════════════════
+  function renderMotion(widget, state, dType) {
+    const active = state.Status === 'On';
+    const el     = makeEl(widget, active ? 'on' : '');
+
+    if (dType === 'minimal') {
+      el.classList.add('widget-minimal');
+      el.innerHTML = `
+        <span class="widget-name">${widget.deviceName}</span>
+        <span class="mini-status ${active ? 'contact-open' : 'contact-closed'}">${active ? 'BEWEGT' : 'FREI'}</span>`;
+    } else {
+      el.innerHTML = `
+        <div class="widget-icon">${active ? '🏃' : '🧘'}</div>
+        <div class="widget-name">${widget.deviceName}</div>
+        <div class="widget-value ${active ? 'contact-open' : 'contact-closed'}">${active ? 'BEWEGT' : 'FREI'}</div>`;
+    }
+    return el; // read-only — no click handler
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // PUSH BUTTON — triggers On command
+  // ══════════════════════════════════════════════════════════════
+  function renderButton(widget, state, dType) {
+    const el = makeEl(widget, '');
+
+    if (dType === 'large') {
+      el.classList.add('widget-large');
+      el.innerHTML = `
+        <div class="widget-icon-lg">🔘</div>
+        <div class="widget-name">${widget.deviceName}</div>`;
+    } else {
+      el.innerHTML = `
+        <div class="widget-icon">🔘</div>
+        <div class="widget-name">${widget.deviceName}</div>
+        <div class="widget-value">DRÜCKEN</div>`;
+    }
+    el.addEventListener('click', async () => {
+      el.classList.add('on');
+      el.style.opacity = '0.5';
+      try { await API.setSwitch(widget.deviceIdx, true); }
+      finally { setTimeout(() => { el.classList.remove('on'); el.style.opacity = ''; }, 400); }
+    });
     return el;
   }
 

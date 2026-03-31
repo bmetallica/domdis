@@ -215,6 +215,11 @@
   // ── Widget HTML builders ──────────────────────────────────────
   function buildWidgetHtml(w, state) {
     var type = w.deviceType || 'sensor';
+    // Auto-upgrade legacy switch widgets to correct type based on live state
+    if (type === 'switch' && state) {
+      var realType = matchType(state);
+      if (realType === 'contact' || realType === 'motion' || realType === 'button') type = realType;
+    }
     switch (type) {
       case 'switch':    return buildSwitch(w, state);
       case 'dimmer':    return buildDimmer(w, state);
@@ -224,17 +229,48 @@
       case 'scene':     return buildScene(w, state);
       case 'energy':    return buildEnergy(w, state);
       case 'camera':    return buildCamera(w);
+      case 'contact':   return buildContact(w, state);
+      case 'motion':    return buildMotion(w, state);
+      case 'button':    return buildButtonWidget(w, state);
       default:          return buildSensor(w, state);
     }
   }
 
   function icon(type) {
     var m = {
-      'switch': '&#128161;', 'dimmer': '&#128262;', 'rgb': '&#127752;',
-      'blinds': '&#129695;', 'thermostat': '&#127777;', 'scene': '&#127916;',
-      'energy': '&#9889;',  'camera': '&#128247;',   'sensor': '&#128202;'
+      'switch':    '&#128161;', 'dimmer':    '&#128262;', 'rgb':    '&#127752;',
+      'blinds':    '&#129695;', 'thermostat':'&#127777;', 'scene':  '&#127916;',
+      'energy':    '&#9889;',   'camera':    '&#128247;', 'sensor': '&#128202;',
+      'contact':   '&#128682;', 'motion':    '&#127939;', 'button': '&#128280;'
     };
     return m[type] || '&#128302;';
+  }
+
+  function iconForState(s) {
+    if (!s) return icon('sensor');
+    var t  = (s.Type      || '').toLowerCase();
+    var st = (s.SubType   || '').toLowerCase();
+    var sw = (s.SwitchType|| '').toLowerCase();
+    if (sw.indexOf('door contact') >= 0)  return '&#128682;'; // 🚪
+    if (sw === 'contact')                 return '&#128167;'; // 💧
+    if (sw.indexOf('motion') >= 0)        return '&#127939;'; // 🏃
+    if (sw.indexOf('push') >= 0)          return '&#128280;'; // 🔘
+    if (t.indexOf('temp') >= 0)           return '&#127777;'; // 🌡
+    if (t.indexOf('hum')  >= 0)           return '&#128167;'; // 💧
+    if (t.indexOf('wind') >= 0)           return '&#128168;'; // 💨
+    if (t.indexOf('rain') >= 0)           return '&#127783;'; // 🌧
+    if (t.indexOf('uv')   >= 0)           return '&#9728;';   // ☀
+    if (t.indexOf('baro') >= 0)           return '&#128309;'; // 🔵
+    if (t.indexOf('lux')  >= 0)           return '&#9728;';   // ☀
+    if (t.indexOf('air quality') >= 0)    return '&#127786;'; // 🌬
+    if (t.indexOf('rfxmeter') >= 0)       return '&#128167;'; // 💧
+    if (st === 'percentage')              return '&#128267;'; // 🔋
+    if (st === 'voltage')                 return '&#128268;'; // 🔌
+    if (st === 'distance')                return '&#128207;'; // 📏
+    if (st.indexOf('voc') >= 0)           return '&#127786;'; // 🌬
+    if (st.indexOf('custom') >= 0)        return '&#127787;'; // 🌫
+    if (st === 'gas')                     return '&#128293;'; // 🔥
+    return icon('sensor');
   }
 
   function buildSwitch(w, s) {
@@ -365,9 +401,9 @@
   }
 
   function buildSensor(w, s) {
-    var val, ic;
+    var val = '\u2014';
+    var ic  = iconForState(s);
     if (s) {
-      // Prefer Temp+Humidity combined display
       if (s.Temp !== undefined && s.Humidity !== undefined) {
         val = s.Temp + '\u00b0C  ' + s.Humidity + '%';
       } else if (s.Temp !== undefined) {
@@ -375,23 +411,50 @@
       } else {
         val = s.Data || s.Status || '\u2014';
       }
-      var t = (s.Type || '').toLowerCase();
-      var sub = (s.SubType || '').toLowerCase();
-      if (t.indexOf('temp') >= 0 || sub.indexOf('temp') >= 0) ic = '&#127777;';
-      else if (t.indexOf('hum') >= 0) ic = '&#128167;';
-      else if (t.indexOf('wind') >= 0) ic = '&#128168;';
-      else if (t.indexOf('rain') >= 0) ic = '&#127783;';
-      else if (t.indexOf('uv') >= 0)   ic = '&#9728;';
-      else if (t.indexOf('baro') >= 0) ic = '&#127956;';
-      else ic = icon('sensor');
-    } else {
-      val = '\u2014';
-      ic  = icon('sensor');
     }
     return '<div class="widget" data-widget-id="' + w.id + '">' +
       '<span class="widget-icon">' + ic + '</span>' +
       '<span class="widget-name">' + escHtml(w.deviceName) + '</span>' +
       '<span class="widget-value">' + escHtml(String(val)) + '</span>' +
+      '</div>';
+  }
+
+  function buildContact(w, s) {
+    var isOpen = s && (s.Status === 'Open' || s.Status === 'On');
+    var sw = (s && s.SwitchType ? s.SwitchType : '').toLowerCase();
+    var isDoor = sw.indexOf('door') >= 0;
+    var ic = isOpen ? (isDoor ? '&#128682;' : '&#128167;') : (isDoor ? '&#128274;' : '&#9989;');
+    var label = isOpen ? (isDoor ? 'OFFEN' : 'ALARM') : (isDoor ? 'GESCHLOSSEN' : 'OK');
+    return '<div class="widget' + (isOpen ? ' widget-on' : '') +
+      '" data-widget-id="' + w.id +
+      '" data-idx="' + w.deviceIdx +
+      '" data-type="contact">' +
+      '<span class="widget-icon">' + ic + '</span>' +
+      '<span class="widget-name">' + escHtml(w.deviceName) + '</span>' +
+      '<span class="widget-value ' + (isOpen ? 'contact-open' : 'contact-closed') + '">' + label + '</span>' +
+      '</div>';
+  }
+
+  function buildMotion(w, s) {
+    var active = s && s.Status === 'On';
+    return '<div class="widget' + (active ? ' widget-on' : '') +
+      '" data-widget-id="' + w.id +
+      '" data-idx="' + w.deviceIdx +
+      '" data-type="motion">' +
+      '<span class="widget-icon">' + (active ? '&#127939;' : '&#129508;') + '</span>' +
+      '<span class="widget-name">' + escHtml(w.deviceName) + '</span>' +
+      '<span class="widget-value ' + (active ? 'contact-open' : 'contact-closed') + '">' +
+      (active ? 'BEWEGT' : 'FREI') + '</span>' +
+      '</div>';
+  }
+
+  function buildButtonWidget(w, s) {
+    return '<div class="widget" data-widget-id="' + w.id +
+      '" data-idx="' + w.deviceIdx +
+      '" data-type="button">' +
+      '<span class="widget-icon">&#128280;</span>' +
+      '<span class="widget-name">' + escHtml(w.deviceName) + '</span>' +
+      '<span class="widget-value">DR\xdcCKEN</span>' +
       '</div>';
   }
 
@@ -468,6 +531,17 @@
         var cmd = val > 0 ? 'Set Level' : 'Off';
         ajaxGet('/api/domoticz/json.htm', { type: 'command', param: 'switchlight', idx: idx, switchcmd: cmd, level: val }, function () {});
       }, 400));
+    });
+
+    // Push button
+    $area.off('click.btn').on('click.btn', '[data-type="button"]', function (e) {
+      e.stopPropagation();
+      var idx = $(this).data('idx');
+      var self = $(this);
+      self.css('opacity', '0.5');
+      ajaxGet('/api/domoticz/json.htm', { type: 'command', param: 'switchlight', idx: idx, switchcmd: 'On' }, function () {
+        setTimeout(function () { self.css('opacity', ''); }, 400);
+      }, function () { self.css('opacity', ''); });
     });
 
     // Blinds
@@ -549,6 +623,23 @@
         var rgbOn = state.Status === 'On';
         el.toggleClass('widget-on', rgbOn);
         el.find('.sw-btn[data-cmd="On"]').toggleClass('sw-btn-on', rgbOn);
+
+      } else if (type === 'contact') {
+        var isOpen = state.Status === 'Open' || state.Status === 'On';
+        var swt = (state.SwitchType || '').toLowerCase();
+        var isDoor = swt.indexOf('door') >= 0;
+        var label = isOpen ? (isDoor ? 'OFFEN' : 'ALARM') : (isDoor ? 'GESCHLOSSEN' : 'OK');
+        el.toggleClass('widget-on', isOpen);
+        el.find('.widget-value').text(label)
+          .toggleClass('contact-open', isOpen)
+          .toggleClass('contact-closed', !isOpen);
+
+      } else if (type === 'motion') {
+        var active = state.Status === 'On';
+        el.toggleClass('widget-on', active);
+        el.find('.widget-value').text(active ? 'BEWEGT' : 'FREI')
+          .toggleClass('contact-open', active)
+          .toggleClass('contact-closed', !active);
 
       } else if (type === 'blinds') {
         el.find('.widget-value').text(state.Status || '\u2014');
@@ -811,14 +902,16 @@
     var type = (d.Type || '').toLowerCase();
     var sub  = (d.SubType || '').toLowerCase();
     var sw   = (d.SwitchType || '').toLowerCase();
-    if (type === 'scene' || type === 'group') return 'scene';
+    if (type === 'scene' || type === 'group')                       return 'scene';
     if (sw.indexOf('blind') >= 0 || sw.indexOf('venetian') >= 0 || sw.indexOf('shutter') >= 0) return 'blinds';
-    if (sub.indexOf('rgb') >= 0)              return 'rgb';
-    if (sw.indexOf('dimmer') >= 0)            return 'dimmer';
-    if (type.indexOf('thermostat') >= 0)      return 'thermostat';
-    if (type.indexOf('p1') >= 0 || sub.indexOf('kwh') >= 0) return 'energy';
-    if (type.indexOf('temp') >= 0)            return 'sensor';
-    if (type.indexOf('light') >= 0 || type.indexOf('switch') >= 0) return 'switch';
+    if (sub.indexOf('rgb') >= 0)                                    return 'rgb';
+    if (sw.indexOf('dimmer') >= 0)                                  return 'dimmer';
+    if (sw.indexOf('door contact') >= 0 || sw === 'contact')        return 'contact';
+    if (sw.indexOf('motion sensor') >= 0 || sw === 'motion')        return 'motion';
+    if (sw.indexOf('push on') >= 0 || sw.indexOf('push off') >= 0)  return 'button';
+    if (type.indexOf('thermostat') >= 0 || sub === 'setpoint')      return 'thermostat';
+    if (type.indexOf('p1') >= 0 || sub === 'kwh')                   return 'energy';
+    if (type.indexOf('light') >= 0 || type.indexOf('switch') >= 0)  return 'switch';
     return 'sensor';
   }
 

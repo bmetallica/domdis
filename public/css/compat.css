@@ -496,3 +496,16 @@ body.theme-retrowave .page-mgmt-name       { color: #f0d0f0; }
 body.theme-retrowave .loading-msg          { color: #6030a0; }
 body.theme-retrowave ::-webkit-scrollbar-track { background: #0d0221; }
 body.theme-retrowave ::-webkit-scrollbar-thumb { background: #ff00ff; }
+
+/* Contact / Motion status colours (theme-specific overrides below) */
+.contact-open   { color: #ff2d78; font-weight: bold; }
+.contact-closed { color: #00ff88; }
+
+body.theme-matrix .contact-open    { color: #00ff41; }
+body.theme-matrix .contact-closed  { color: #2a6a2a; }
+body.theme-bladerunner .contact-open   { color: #ff6b35; }
+body.theme-bladerunner .contact-closed { color: #4ecdc4; }
+body.theme-tron .contact-open    { color: #00b4d8; }
+body.theme-tron .contact-closed  { color: #00f5d4; }
+body.theme-retrowave .contact-open   { color: #ff00ff; }
+body.theme-retrowave .contact-closed { color: #00ff88; }

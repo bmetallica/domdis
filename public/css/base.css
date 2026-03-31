@@ -537,3 +537,7 @@ input:checked + .toggle-slider::before { transform: translateX(20px); }
 
 /* ─── UTILITY ────────────────────────────────────────────────── */
 .hidden { display: none !important; }
+
+/* ─── CONTACT / MOTION / BUTTON ─────────────────────────────── */
+.contact-open   { color: var(--primary); font-weight: bold; }
+.contact-closed { color: var(--success); }

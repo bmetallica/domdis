@@ -104,16 +104,21 @@ router.delete('/pages/:pageId/widgets/:widgetId', (req, res) => {
   res.json({ status: 'OK' });
 });
 
-// Reorder widgets on page
+// Reorder widgets on page (optionally for a specific view)
 router.post('/pages/:id/reorder', (req, res) => {
   const data = readJson(PAGES_PATH, { pages: [] });
   const page = data.pages.find(p => p.id === req.params.id);
   if (!page) return res.status(404).json({ status: 'ERROR', message: 'Page not found' });
-  // req.body.order = array of widget IDs in new order
-  const orderMap = {};
-  req.body.order.forEach((id, idx) => { orderMap[id] = idx; });
-  page.widgets.forEach(w => { if (orderMap[w.id] !== undefined) w.position = orderMap[w.id]; });
-  page.widgets.sort((a, b) => a.position - b.position);
+
+  if (req.body.view === 'portrait') {
+    if (!page.portraitLayout) page.portraitLayout = { order: [], sizes: {} };
+    page.portraitLayout.order = req.body.order;
+  } else {
+    const orderMap = {};
+    req.body.order.forEach((id, idx) => { orderMap[id] = idx; });
+    page.widgets.forEach(w => { if (orderMap[w.id] !== undefined) w.position = orderMap[w.id]; });
+    page.widgets.sort((a, b) => a.position - b.position);
+  }
   writeJson(PAGES_PATH, data);
   res.json({ status: 'OK' });
 });

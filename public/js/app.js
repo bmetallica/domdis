@@ -21,6 +21,11 @@
   let editMode = false;
   let dragWidget = null, dragOverWidget = null;
 
+  // ── View / Orientation ────────────────────────────────────────
+  const VIEW = new URLSearchParams(window.location.search).get('view') === 'portrait'
+    ? 'portrait' : 'landscape';
+  let editView = VIEW;   // which orientation layout is being edited
+
   // ── DOM refs ──────────────────────────────────────────────────
   const pagesContainer  = document.getElementById('pages-container');
   const pageIndicators  = document.getElementById('page-indicators');
@@ -116,13 +121,29 @@
       if (editMode) {
         const editHint = document.createElement('div');
         editHint.className = 'edit-mode-hint';
-        editHint.textContent = 'BEARBEITUNGSMODUS — Widgets ziehen zum Verschieben · ⚙ zum Anpassen';
+        editHint.innerHTML =
+          'BEARBEITUNGSMODUS &mdash; Widgets ziehen &middot; &#9881; Anpassen' +
+          `<span class="edit-view-toggle">` +
+          `<button class="edit-view-btn${editView==='landscape'?' active':''}" data-v="landscape">&#128444; Quer</button>` +
+          `<button class="edit-view-btn${editView==='portrait'?' active':''}" data-v="portrait">&#128241; Hochkant</button>` +
+          `</span>`;
+        editHint.querySelectorAll('.edit-view-btn').forEach(btn => {
+          btn.addEventListener('click', () => { editView = btn.dataset.v; renderPages(); });
+        });
         pageEl.appendChild(editHint);
       }
+
+      // Apply view class for correct grid column count
+      document.body.classList.remove('view-portrait', 'view-landscape');
+      document.body.classList.add('view-' + (editMode ? editView : VIEW));
 
       const grid = document.createElement('div');
       grid.className = 'widget-grid';
       pageEl.appendChild(grid);
+
+      // Determine active view for this render pass
+      const activeView = editMode ? editView : VIEW;
+      const pl = page.portraitLayout || {};
 
       if (page.widgets.length === 0) {
         grid.innerHTML = `
@@ -131,10 +152,27 @@
             <div>Keine Geräte auf dieser Seite.<br>Geräte in den Einstellungen hinzufügen.</div>
           </div>`;
       } else {
-        const sorted = [...page.widgets].sort((a, b) => (a.position||0) - (b.position||0));
+        // Sort widgets for the active view
+        let sorted;
+        if (activeView === 'portrait' && pl.order && pl.order.length) {
+          const orderMap = {};
+          pl.order.forEach((id, i) => { orderMap[id] = i; });
+          sorted = [...page.widgets].sort((a, b) => {
+            const ia = orderMap[a.id] !== undefined ? orderMap[a.id] : 9999;
+            const ib = orderMap[b.id] !== undefined ? orderMap[b.id] : 9999;
+            return ia - ib;
+          });
+        } else {
+          sorted = [...page.widgets].sort((a, b) => (a.position||0) - (b.position||0));
+        }
+
         sorted.forEach(widget => {
           const state = deviceStates[widget.deviceIdx];
-          const el = Widgets.render(widget, state || null);
+          // Use portrait-specific size when applicable
+          const effectiveWidget = activeView === 'portrait' && pl.sizes && pl.sizes[widget.id]
+            ? Object.assign({}, widget, { size: pl.sizes[widget.id] })
+            : widget;
+          const el = Widgets.render(effectiveWidget, state || null);
 
           if (editMode) {
             el.draggable = true;
@@ -363,12 +401,19 @@
     const wType = widget.deviceType || 'sensor';
     const displayTypes = Widgets.getDisplayTypes(wType);
     const sizes = Widgets.getSizes();
-    const currentDT   = widget.displayType || 'card';
-    const currentSize = widget.size || '1x1';
+    const currentDT = widget.displayType || 'card';
 
-    modal.querySelector('.modal-title').textContent = widget.deviceName;
+    // Determine effective size for the active edit view
+    const page = pagesData.pages.find(p => p.id === pageId);
+    const pl = (page && page.portraitLayout) || {};
+    const currentSize = editView === 'portrait'
+      ? (pl.sizes && pl.sizes[widget.id] ? pl.sizes[widget.id] : widget.size || '1x1')
+      : (widget.size || '1x1');
 
-    // Display types
+    const viewLabel = editView === 'portrait' ? ' (Hochkant)' : ' (Quer)';
+    modal.querySelector('.modal-title').textContent = widget.deviceName + viewLabel;
+
+    // Display types (shared across views)
     const dtGrid = modal.querySelector('.display-type-grid');
     dtGrid.innerHTML = '';
     displayTypes.forEach(dt => {
@@ -386,7 +431,7 @@
       dtGrid.appendChild(btn);
     });
 
-    // Size grid
+    // Size grid — saves to portrait or landscape slot depending on editView
     const sizeGrid = modal.querySelector('.size-grid');
     sizeGrid.innerHTML = '';
     sizes.forEach(sz => {
@@ -397,7 +442,12 @@
       btn.addEventListener('click', async () => {
         sizeGrid.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        widget.size = sz.id;
+        if (editView === 'portrait' && page) {
+          if (!page.portraitLayout) page.portraitLayout = { order: [], sizes: {} };
+          page.portraitLayout.sizes[widget.id] = sz.id;
+        } else {
+          widget.size = sz.id;
+        }
         await API.savePages(pagesData);
         renderPages();
       });
@@ -441,12 +491,25 @@
   async function swapWidgets(pageId, id1, id2) {
     const page = pagesData.pages.find(p => p.id === pageId);
     if (!page) return;
-    const w1 = page.widgets.find(w => w.id === id1);
-    const w2 = page.widgets.find(w => w.id === id2);
-    if (!w1 || !w2) return;
-    [w1.position, w2.position] = [w2.position, w1.position];
-    page.widgets.sort((a, b) => (a.position||0) - (b.position||0));
-    await API.reorderWidgets(pageId, page.widgets.map(w => w.id));
+
+    if (editView === 'portrait') {
+      if (!page.portraitLayout) page.portraitLayout = { order: [], sizes: {} };
+      // Build current portrait order, falling back to landscape order
+      let order = page.portraitLayout.order && page.portraitLayout.order.length
+        ? [...page.portraitLayout.order]
+        : [...page.widgets].sort((a, b) => (a.position||0) - (b.position||0)).map(w => w.id);
+      const i1 = order.indexOf(id1), i2 = order.indexOf(id2);
+      if (i1 >= 0 && i2 >= 0) { const tmp = order[i1]; order[i1] = order[i2]; order[i2] = tmp; }
+      page.portraitLayout.order = order;
+      await API.reorderWidgets(pageId, order, 'portrait');
+    } else {
+      const w1 = page.widgets.find(w => w.id === id1);
+      const w2 = page.widgets.find(w => w.id === id2);
+      if (!w1 || !w2) return;
+      [w1.position, w2.position] = [w2.position, w1.position];
+      page.widgets.sort((a, b) => (a.position||0) - (b.position||0));
+      await API.reorderWidgets(pageId, page.widgets.map(w => w.id));
+    }
     renderPages();
   }
 

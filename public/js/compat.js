@@ -19,8 +19,15 @@
   var camTimers      = {};   // widget.id → setInterval handle
   var touchStartX    = 0;
 
+  // ── View / Orientation ────────────────────────────────────────
+  var VIEW = (function () {
+    var m = window.location.search.match(/[?&]view=([^&]+)/);
+    return (m && m[1] === 'portrait') ? 'portrait' : 'landscape';
+  }());
+
   // ── Boot ───────────────────────────────────────────────────────
   $(document).ready(function () {
+    $('body').addClass('view-' + VIEW);
     startClock();
     loadSettings(function () {
       loadPages(function () {
@@ -168,7 +175,7 @@
     }
 
     var rowsHtml = '';
-    var COLS = 3;
+    var COLS = (VIEW === 'portrait') ? 2 : 3;
     for (var i = 0; i < widgets.length; i++) {
       if (i % COLS === 0) rowsHtml += '<tr>';
       var w = widgets[i];

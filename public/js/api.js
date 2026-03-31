@@ -137,8 +137,8 @@ const API = (function () {
     return del('/api/pages/' + pageId + '/widgets/' + widgetId);
   }
 
-  async function reorderWidgets(pageId, order) {
-    return post('/api/pages/' + pageId + '/reorder', { order });
+  async function reorderWidgets(pageId, order, view) {
+    return post('/api/pages/' + pageId + '/reorder', { order, view: view || 'landscape' });
   }
 
   return {

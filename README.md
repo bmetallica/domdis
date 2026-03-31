@@ -42,17 +42,9 @@
 #### 1. Pull the image
 
 ```bash
-docker pull 192.168.66.12:5000/bmetallica/domdis:latest
+docker pull bmetallica/domdis:latest
 ```
 
-> **Note:** The registry at `192.168.66.12:5000` is a local HTTP registry.  
-> Add it to Docker's insecure registries if needed:
->
-> ```json
-> // /etc/docker/daemon.json
-> { "insecure-registries": ["192.168.66.12:5000"] }
-> ```
-> Then `systemctl restart docker`.
 
 #### 2. Create your working directory
 
@@ -267,27 +259,7 @@ When running in Docker, mount a host directory as `/app/config` (see `docker-com
 
 ---
 
-## Docker — Useful Commands
 
-```bash
-# Start
-docker compose up -d
-
-# Stop
-docker compose down
-
-# View logs
-docker compose logs -f
-
-# Update to newest image
-docker compose pull && docker compose up -d
-
-# Build and push to local registry
-docker build -t 192.168.66.12:5000/bmetallica/domdis:latest .
-docker push  192.168.66.12:5000/bmetallica/domdis:latest
-```
-
----
 
 ## Project Structure
 

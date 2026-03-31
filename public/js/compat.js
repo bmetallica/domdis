@@ -412,7 +412,10 @@
         val = s.Data || s.Status || '\u2014';
       }
     }
-    return '<div class="widget" data-widget-id="' + w.id + '">' +
+    return '<div class="widget"' +
+      ' data-widget-id="' + w.id + '"' +
+      ' data-idx="' + w.deviceIdx + '"' +
+      ' data-type="sensor">' +
       '<span class="widget-icon">' + ic + '</span>' +
       '<span class="widget-name">' + escHtml(w.deviceName) + '</span>' +
       '<span class="widget-value">' + escHtml(String(val)) + '</span>' +

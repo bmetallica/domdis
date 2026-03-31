@@ -1,6 +1,6 @@
 services:
   domdis:
-    image: 192.168.66.12:5000/bmetallica/domdis:latest
+    image: bmetallica/domdis:latest
     container_name: domdis
     restart: unless-stopped
 

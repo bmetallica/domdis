@@ -86,7 +86,7 @@ const Widgets = (function () {
     if (sub === 'kwh' || type.includes('p1 smart meter') || type.includes('youless') || sub.includes('energy')) return 'energy';
     if (type.includes('temp') || type.includes('humidity') || type.includes('wind') ||
         type.includes('rain') || type.includes('uv') || type.includes('baro')) return 'sensor';
-    if (type.includes('light/switch') || type.includes('switch')) return 'switch';
+    if (type.includes('light') || type.includes('switch')) return 'switch';
     return 'sensor';
   }
 

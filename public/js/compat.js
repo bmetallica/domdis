@@ -674,6 +674,7 @@
           val = state.Data || state.Status || '\u2014';
         }
         el.find('.widget-value').text(val);
+        el.find('.widget-icon').html(iconForState(state));
       }
     });
   }
@@ -705,6 +706,34 @@
         else        goToPage(currentPage - 1);
       }
     });
+
+    // Fullscreen toggle
+    $(document).on('click', '#fullscreen-btn', function (e) {
+      e.preventDefault();
+      var el = document.documentElement;
+      var isFs = document.fullscreenElement || document.webkitFullscreenElement ||
+                 document.mozFullScreenElement || document.msFullscreenElement;
+      if (isFs) {
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+        else if (document.msExitFullscreen) document.msExitFullscreen();
+      } else {
+        if (el.requestFullscreen) el.requestFullscreen();
+        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+        else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
+        else if (el.msRequestFullscreen) el.msRequestFullscreen();
+      }
+    });
+    function updateFullscreenIcon() {
+      var isFs = document.fullscreenElement || document.webkitFullscreenElement ||
+                 document.mozFullScreenElement || document.msFullscreenElement;
+      $('#fullscreen-btn').html(isFs ? '&#x2715;' : '&#9974;');
+    }
+    document.addEventListener('fullscreenchange', updateFullscreenIcon);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
+    document.addEventListener('mozfullscreenchange', updateFullscreenIcon);
+    document.addEventListener('MSFullscreenChange', updateFullscreenIcon);
 
     // Settings open / close
     $(document).on('click', '#settings-btn', function (e) {

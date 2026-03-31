@@ -1,0 +1,10 @@
+{
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Home",
+      "icon": "home",
+      "widgets": []
+    }
+  ]
+}

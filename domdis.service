@@ -1,0 +1,20 @@
+[Unit]
+Description=DOMDIS — Domoticz Cyberpunk Dashboard
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/domdis
+ExecStart=/usr/bin/node /opt/domdis/server.js
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=domdis
+Environment=NODE_ENV=production
+Environment=PORT=3001
+
+[Install]
+WantedBy=multi-user.target

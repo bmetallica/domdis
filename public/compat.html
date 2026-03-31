@@ -1,0 +1,171 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="de">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>DOMDIS Compat</title>
+  <link rel="stylesheet" type="text/css" href="/css/compat.css" />
+  <script type="text/javascript" src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+  <script type="text/javascript">
+    if (typeof jQuery === 'undefined') {
+      document.write('<scr'+'ipt type="text/javascript" src="/js/jquery-1.11.3.min.js"><\/scr'+'ipt>');
+    }
+  </script>
+</head>
+<body>
+
+<!-- HEADER -->
+<table id="header" width="100%" cellpadding="0" cellspacing="0">
+  <tr>
+    <td id="header-left">
+      <span id="logo">DOMDIS</span>
+      <span id="conn-dot" class="dot-offline" title="Verbindung">&nbsp;</span>
+    </td>
+    <td id="header-center">
+      <span id="clock-time">00:00</span><br />
+      <span id="clock-date">Mo, 1. Jan</span>
+    </td>
+    <td id="header-right">
+      <a href="#" id="settings-btn" class="icon-link" title="Einstellungen">&#9881;</a>
+    </td>
+  </tr>
+</table>
+
+<!-- PAGE NAVIGATION -->
+<table id="page-nav" width="100%" cellpadding="0" cellspacing="0">
+  <tr>
+    <td id="nav-left"  width="15%"><a href="#" id="btn-prev" class="nav-arrow">&lsaquo;</a></td>
+    <td id="nav-center"><span id="page-title">Home</span></td>
+    <td id="nav-right" width="15%"><a href="#" id="btn-next" class="nav-arrow">&rsaquo;</a></td>
+  </tr>
+</table>
+
+<!-- PAGE DOTS -->
+<div id="page-dots"></div>
+
+<!-- WIDGETS AREA — dynamic rows added by JS -->
+<div id="widgets-area">
+  <table id="widget-table" width="100%" cellpadding="6" cellspacing="6">
+    <tbody id="widget-tbody"></tbody>
+  </table>
+</div>
+
+<!-- SETTINGS PANEL -->
+<div id="settings-panel" style="display:none;">
+  <table width="100%" cellpadding="6" cellspacing="0">
+    <tr>
+      <td colspan="2">
+        <span class="settings-title">EINSTELLUNGEN</span>
+        <a href="#" id="settings-close" class="icon-link" style="float:right;">&#x2715;</a>
+      </td>
+    </tr>
+    <tr><td colspan="2"><div class="sep"></div></td></tr>
+
+    <tr><td colspan="2" class="section-label">DESIGN</td></tr>
+    <tr>
+      <td class="form-label">Theme</td>
+      <td>
+        <select id="cfg-theme" class="form-select">
+          <option value="cyberpunk">Cyberpunk 2077</option>
+          <option value="matrix">Matrix</option>
+          <option value="bladerunner">Blade Runner</option>
+          <option value="tron">TRON Legacy</option>
+          <option value="retrowave">Synthwave</option>
+        </select>
+      </td>
+    </tr>
+    <tr><td colspan="2"><div class="sep"></div></td></tr>
+
+    <tr><td colspan="2" class="section-label">VERBINDUNG</td></tr>
+    <tr>
+      <td class="form-label">Host / IP</td>
+      <td><input type="text" id="cfg-host" class="form-input" value="" /></td>
+    </tr>
+    <tr>
+      <td class="form-label">Port</td>
+      <td><input type="text" id="cfg-port" class="form-input" value="8080" /></td>
+    </tr>
+    <tr>
+      <td class="form-label">SSL</td>
+      <td><input type="checkbox" id="cfg-ssl" /></td>
+    </tr>
+    <tr>
+      <td class="form-label">Benutzer</td>
+      <td><input type="text" id="cfg-user" class="form-input" value="" /></td>
+    </tr>
+    <tr>
+      <td class="form-label">Passwort</td>
+      <td><input type="password" id="cfg-pass" class="form-input" value="" /></td>
+    </tr>
+    <tr>
+      <td colspan="2">
+        <input type="button" id="btn-test"      class="btn-secondary" value="Testen" />
+        <input type="button" id="btn-save-conn" class="btn-primary"   value="Speichern" />
+      </td>
+    </tr>
+    <tr><td colspan="2"><div id="test-result"></div></td></tr>
+    <tr><td colspan="2"><div class="sep"></div></td></tr>
+
+    <tr><td colspan="2" class="section-label">GER&#196;TE HINZUF&#220;GEN</td></tr>
+    <tr>
+      <td class="form-label">Seite</td>
+      <td><select id="cfg-target-page" class="form-select"></select></td>
+    </tr>
+    <tr>
+      <td class="form-label">Kategorie</td>
+      <td>
+        <select id="cfg-category" class="form-select">
+          <option value="all">Alle</option>
+          <option value="switch">Schalter / Lampen</option>
+          <option value="dimmer">Dimmer</option>
+          <option value="rgb">RGB Lampen</option>
+          <option value="temp">Temperatur</option>
+          <option value="hum">Luftfeuchte</option>
+          <option value="thermostat">Thermostat</option>
+          <option value="blinds">Rolll&#228;den</option>
+          <option value="scene">Szenen</option>
+          <option value="energy">Energie / Strom</option>
+          <option value="camera">Kameras</option>
+        </select>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2">
+        <input type="button" id="btn-load-devices" class="btn-secondary" value="Ger&#228;te laden" />
+      </td>
+    </tr>
+    <tr><td colspan="2"><div id="devices-list"></div></td></tr>
+    <tr><td colspan="2"><div class="sep"></div></td></tr>
+
+    <tr><td colspan="2" class="section-label">SEITEN VERWALTEN</td></tr>
+    <tr>
+      <td colspan="2">
+        <input type="button" id="btn-add-page" class="btn-secondary" value="+ Neue Seite" />
+      </td>
+    </tr>
+    <tr><td colspan="2"><div id="pages-mgmt-list"></div></td></tr>
+    <tr><td colspan="2"><div class="sep"></div></td></tr>
+
+    <tr><td colspan="2" class="section-label">AUTOMATION</td></tr>
+    <tr>
+      <td class="form-label">Home-Seite</td>
+      <td><select id="cfg-home-page" class="form-select"><option value="">-- keine --</option></select></td>
+    </tr>
+    <tr>
+      <td class="form-label">Auto-Return (s)</td>
+      <td><input type="text" id="cfg-auto-return" class="form-input" value="30" /></td>
+    </tr>
+    <tr>
+      <td colspan="2">
+        <input type="button" id="btn-save-auto" class="btn-primary" value="Speichern" />
+      </td>
+    </tr>
+  </table>
+</div>
+
+<script type="text/javascript" src="/js/compat.js"></script>
+</body>
+</html>

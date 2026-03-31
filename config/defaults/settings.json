@@ -1,0 +1,23 @@
+{
+  "domoticz": {
+    "host": "",
+    "port": 8080,
+    "ssl": false,
+    "username": "",
+    "password": ""
+  },
+  "theme": "cyberpunk",
+  "autoReturnTimeout": 30,
+  "homePage": null,
+  "nightMode": {
+    "enabled": false,
+    "startTime": "22:00",
+    "endTime": "06:00",
+    "brightness": 30
+  },
+  "slideshowMode": {
+    "enabled": false,
+    "interval": 10
+  },
+  "pollInterval": 3000
+}

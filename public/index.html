@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>DOMDIS — Domoticz Dashboard</title>
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" id="theme-css" href="/css/themes/cyberpunk.css">
+</head>
+<body class="theme-cyberpunk">
+
+<!-- ═══════════════════════════════════════════ HEADER ═══ -->
+<header id="app-header">
+  <div class="header-left">
+    <span class="logo-text">DOMDIS</span>
+    <span id="connection-status" class="status-dot offline" title="Verbindung"></span>
+  </div>
+  <div class="header-center">
+    <span id="clock-time">00:00</span>
+    <span id="clock-date">Mo, 1. Jan</span>
+  </div>
+  <div class="header-right">
+    <button id="fullscreen-btn" class="icon-btn" title="Vollbild">⛶</button>
+    <button id="edit-btn" class="icon-btn" title="Bearbeitungsmodus">✏</button>
+    <button id="settings-btn" class="icon-btn" title="Einstellungen">⚙</button>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════ PAGE NAV ═══ -->
+<div id="page-nav-left" class="page-nav-arrow left" title="Vorherige Seite">&#8249;</div>
+<div id="page-nav-right" class="page-nav-arrow right" title="Nächste Seite">&#8250;</div>
+
+<!-- ═══════════════════════════════════════════ PAGES ═══ -->
+<div id="pages-wrapper">
+  <div id="pages-container">
+    <!-- Pages rendered by JS -->
+  </div>
+</div>
+
+<!-- Page indicators (dots) -->
+<div id="page-indicators"></div>
+
+<!-- ═══════════════════════════════════════════ SETTINGS OVERLAY ═══ -->
+<div id="settings-overlay" class="settings-overlay hidden">
+  <div class="settings-panel">
+    <div class="settings-header">
+      <h2 class="settings-title">EINSTELLUNGEN</h2>
+      <button id="settings-close" class="icon-btn close-btn">✕</button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="settings-tabs">
+      <button class="tab-btn active" data-tab="connection">Verbindung</button>
+      <button class="tab-btn" data-tab="appearance">Aussehen</button>
+      <button class="tab-btn" data-tab="pages-mgmt">Seiten</button>
+      <button class="tab-btn" data-tab="devices">Geräte</button>
+      <button class="tab-btn" data-tab="automation">Automation</button>
+    </div>
+
+    <!-- Tab: Connection -->
+    <div class="tab-content active" id="tab-connection">
+      <div class="form-grid">
+        <label>Host / IP</label>
+        <input type="text" id="cfg-host" placeholder="192.168.1.100">
+        <label>Port</label>
+        <input type="number" id="cfg-port" placeholder="8080">
+        <label>SSL</label>
+        <label class="toggle-switch">
+          <input type="checkbox" id="cfg-ssl">
+          <span class="toggle-slider"></span>
+        </label>
+        <label>Benutzername</label>
+        <input type="text" id="cfg-user" placeholder="admin">
+        <label>Passwort</label>
+        <input type="password" id="cfg-pass" placeholder="••••••••">
+      </div>
+      <div class="btn-row">
+        <button id="btn-test-connection" class="btn secondary">Verbindung testen</button>
+        <button id="btn-save-connection" class="btn primary">Speichern</button>
+      </div>
+      <div id="connection-test-result" class="test-result"></div>
+    </div>
+
+    <!-- Tab: Appearance -->
+    <div class="tab-content hidden" id="tab-appearance">
+      <h3 class="section-label">Theme wählen</h3>
+      <div class="theme-grid" id="theme-grid">
+        <div class="theme-card active" data-theme="cyberpunk">
+          <div class="theme-preview cyberpunk-preview"></div>
+          <span>Cyberpunk 2077</span>
+        </div>
+        <div class="theme-card" data-theme="matrix">
+          <div class="theme-preview matrix-preview"></div>
+          <span>Matrix</span>
+        </div>
+        <div class="theme-card" data-theme="bladerunner">
+          <div class="theme-preview bladerunner-preview"></div>
+          <span>Blade Runner</span>
+        </div>
+        <div class="theme-card" data-theme="tron">
+          <div class="theme-preview tron-preview"></div>
+          <span>TRON Legacy</span>
+        </div>
+        <div class="theme-card" data-theme="retrowave">
+          <div class="theme-preview retrowave-preview"></div>
+          <span>Synthwave</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Pages Management -->
+    <div class="tab-content hidden" id="tab-pages-mgmt">
+      <div class="btn-row">
+        <button id="btn-add-page" class="btn primary">+ Seite hinzufügen</button>
+      </div>
+      <div id="pages-list" class="pages-list"></div>
+    </div>
+
+    <!-- Tab: Devices -->
+    <div class="tab-content hidden" id="tab-devices">
+      <div class="form-grid">
+        <label>Kategorie</label>
+        <select id="device-category">
+          <option value="all">Alle</option>
+          <option value="switch">Schalter / Lampen</option>
+          <option value="dimmer">Dimmer</option>
+          <option value="rgb">RGB Lampen</option>
+          <option value="temp">Temperatur</option>
+          <option value="hum">Luftfeuchte</option>
+          <option value="temp+hum">Temp + Feuchte</option>
+          <option value="thermostat">Thermostat</option>
+          <option value="wind">Wind</option>
+          <option value="rain">Regen</option>
+          <option value="uv">UV</option>
+          <option value="baro">Barometer</option>
+          <option value="blinds">Rollladen / Jalousien</option>
+          <option value="scene">Szenen</option>
+          <option value="group">Gruppen</option>
+          <option value="energy">Energie / Strom</option>
+          <option value="camera">Kameras</option>
+        </select>
+        <label>Ziel-Seite</label>
+        <select id="device-target-page"></select>
+      </div>
+      <button id="btn-load-devices" class="btn secondary">Geräte laden</button>
+      <div id="devices-list" class="devices-list"></div>
+    </div>
+
+    <!-- Tab: Automation -->
+    <div class="tab-content hidden" id="tab-automation">
+      <div class="form-grid">
+        <label>Home-Seite</label>
+        <select id="cfg-home-page">
+          <option value="">— keine —</option>
+        </select>
+        <label>Auto-Return (Sek.)</label>
+        <input type="number" id="cfg-auto-return" min="0" max="300" value="30">
+        <label>Nacht-Modus</label>
+        <label class="toggle-switch">
+          <input type="checkbox" id="cfg-night-mode">
+          <span class="toggle-slider"></span>
+        </label>
+        <label>Nacht von</label>
+        <input type="time" id="cfg-night-start" value="22:00">
+        <label>Nacht bis</label>
+        <input type="time" id="cfg-night-end" value="06:00">
+        <label>Nacht-Helligkeit %</label>
+        <input type="number" id="cfg-night-brightness" min="5" max="100" value="30">
+        <label>Slideshow-Modus</label>
+        <label class="toggle-switch">
+          <input type="checkbox" id="cfg-slideshow">
+          <span class="toggle-slider"></span>
+        </label>
+        <label>Slideshow-Interval (Sek.)</label>
+        <input type="number" id="cfg-slideshow-interval" min="3" max="60" value="10">
+      </div>
+      <div class="btn-row">
+        <button id="btn-save-automation" class="btn primary">Speichern</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ WIDGET CONFIG MODAL ═══ -->
+<div id="widget-modal" class="modal-overlay hidden">
+  <div class="modal-panel">
+    <div class="modal-header">
+      <h3 class="modal-title">Widget konfigurieren</h3>
+      <button class="modal-close icon-btn">✕</button>
+    </div>
+    <p class="modal-hint">Darstellungsart:</p>
+    <div class="display-type-grid"></div>
+    <p class="modal-hint" style="margin-top:12px">Größe:</p>
+    <div class="size-grid"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ SCRIPTS ═══ -->
+<script src="/js/api.js"></script>
+<script src="/js/widgets.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>

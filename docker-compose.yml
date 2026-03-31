@@ -1,0 +1,44 @@
+services:
+  domdis:
+    image: 192.168.66.12:5000/bmetallica/domdis:latest
+    container_name: domdis
+    restart: unless-stopped
+
+    ports:
+      - "${DOMDIS_PORT:-3001}:3001"
+
+    environment:
+      - PORT=3001
+
+    volumes:
+      # Persistent config — settings & pages survive updates
+      - ./config:/app/config
+
+    # Allows the container to reach services on the Docker host
+    # (e.g. Domoticz running on the same server)
+    # Use "host.docker.internal" as hostname in DOMDIS settings
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    # ── ALTERNATIVE: host network mode ───────────────────────────
+    # If Domoticz only listens on 127.0.0.1, uncomment the line
+    # below and REMOVE the "ports:" block above.
+    # The container then shares the host's network stack directly,
+    # so "localhost" in DOMDIS settings reaches Domoticz directly.
+    # Port is controlled via the PORT environment variable above.
+    # network_mode: "host"
+
+    # Optional: run behind a reverse proxy on the same Docker network
+    # networks:
+    #   - proxy
+
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+# networks:
+#   proxy:
+#     external: true

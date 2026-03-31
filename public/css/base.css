@@ -132,6 +132,10 @@ body.view-portrait .widget-grid {
   transition: transform 0.1s, box-shadow 0.2s;
 }
 .widget:active { transform: scale(0.97); }
+.widget-spacer { background: transparent !important; border: none !important;
+  box-shadow: none !important; cursor: default !important; pointer-events: none; }
+.edit-mode .widget-spacer { pointer-events: auto;
+  border: 1px dashed rgba(255,255,255,0.15) !important; cursor: grab !important; }
 
 .widget-icon { font-size: 1.8rem; line-height: 1; }
 .widget-name {

@@ -241,6 +241,7 @@
       case 'contact':   return buildContact(w, state);
       case 'motion':    return buildMotion(w, state);
       case 'button':    return buildButtonWidget(w, state);
+      case 'spacer':    return '<div class="widget widget-spacer">&nbsp;</div>';
       default:          return buildSensor(w, state);
     }
   }
@@ -785,6 +786,20 @@
     });
 
     // Load devices (including cameras from separate endpoint)
+    $(document).on('click', '#btn-add-spacer', function () {
+      var pageId = $('#cfg-target-page').val();
+      if (!pageId) { alert('Bitte Seite ausw\xe4hlen.'); return; }
+      ajaxPost('/api/pages/' + pageId + '/widgets',
+        { deviceIdx: null, deviceName: 'Leerfeld', deviceType: 'spacer' },
+        function () {
+          ajaxGet('/api/pages', {}, function (data) {
+            pagesData = data;
+            renderCurrentPage();
+          });
+        }
+      );
+    });
+
     $(document).on('click', '#btn-load-devices', function () {
       var cat = $('#cfg-category').val();
       var pageId = $('#cfg-target-page').val();

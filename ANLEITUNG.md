@@ -16,12 +16,13 @@
 6. [Geräte hinzufügen](#6-geräte-hinzufügen)
 7. [Gerätetypen und Darstellungsarten](#7-gerätetypen-und-darstellungsarten)
 8. [Bearbeitungsmodus](#8-bearbeitungsmodus)
-9. [Themes (Designs)](#9-themes-designs)
-10. [Automation](#10-automation)
-11. [Kompatibilitätsmodus für alte Geräte](#11-kompatibilitätsmodus-für-alte-geräte)
-12. [Kamera-Livebild](#12-kamera-livebild)
-13. [Fehlerbehebung](#13-fehlerbehebung)
-14. [Verzeichnisstruktur](#14-verzeichnisstruktur)
+9. [Hochkant- / Querformat-Modus](#9-hochkant---querformat-modus)
+10. [Themes (Designs)](#10-themes-designs)
+11. [Automation](#11-automation)
+12. [Kompatibilitätsmodus für alte Geräte](#12-kompatibilitätsmodus-für-alte-geräte)
+13. [Kamera-Livebild](#13-kamera-livebild)
+14. [Fehlerbehebung](#14-fehlerbehebung)
+15. [Verzeichnisstruktur](#15-verzeichnisstruktur)
 
 ---
 
@@ -285,7 +286,26 @@ Bereits hinzugefügte Geräte sind mit „hinzugefügt" markiert.
 | Energie / Strom | Stromzähler, P1-Meter, Leistungsmesser |
 | Kameras | IP-Kameras (in Domoticz hinterlegt) |
 
-### 6.3 Gerät wieder entfernen
+### 6.3 Leerfelder (Platzhalter) einfügen
+
+Manchmal soll ein Bereich der Seite absichtlich freigelassen werden —
+z. B. um Widgets in einer bestimmten Spalte auszurichten oder einen
+visuellen Abstand zu erzeugen.
+
+1. Einstellungen öffnen (⚙)
+2. Reiter **„Geräte"** → Ziel-Seite auswählen
+3. Auf **„+ Leerfeld"** klicken
+
+Ein unsichtbares Platzhalter-Widget wird eingefügt. Im Bearbeitungsmodus
+erscheint es als gestrichelter Rahmen — so ist es auffindbar und kann
+verschoben oder gelöscht werden. Auf dem Dashboard selbst ist es
+vollständig unsichtbar.
+
+Leerfelder können wie normale Widgets in der Größe angepasst werden
+(1×1, 2×1, 1×2 usw.) und haben separate Positionen für Hoch- und
+Querformat.
+
+### 6.4 Gerät wieder entfernen
 
 Im **Bearbeitungsmodus** (✏-Symbol) erscheint auf jedem Widget ein
 **🗑 Papierkorb-Symbol**. Darauf tippen entfernt das Widget von der Seite.
@@ -401,13 +421,82 @@ Im selben Dialog (⚙) unter „Größe" eine der folgenden Optionen wählen:
 | **2×2** | 2 | 2 | Kameras, Energie-Detail |
 | **3×1** | 3 | 1 | Breite Anzeigen |
 
-### 8.5 Bearbeitungsmodus beenden
+### 8.5 Layout für Hoch- und Querformat getrennt konfigurieren
+
+Im Bearbeitungsmodus erscheint oben ein Toggle:
+
+```
+🖥 Quer  |  📱 Hochkant
+```
+
+- Der **aktive Button** bestimmt, welches Layout gerade bearbeitet wird
+- Das Gitter wechselt sofort auf das entsprechende Layout um (Vorschau)
+- Drag & Drop und Größenänderungen werden im jeweils aktiven Layout gespeichert
+- Quer und Hochkant haben **vollständig unabhängige** Positionen und Größen
+
+**Anwendungsfall:** Du hast ein Wanddisplay im Hochkant- und eines im
+Querformat. Beide rufen dieselbe Seite auf, aber mit unterschiedlichen
+URL-Parametern — und jedes zeigt sein eigenes, optimiertes Layout.
+
+### 8.6 Bearbeitungsmodus beenden
 
 Erneut auf **✏** tippen oder Taste **E** drücken.
 
 ---
 
-## 9. Themes (Designs)
+## 9. Hochkant- / Querformat-Modus
+
+DOMDIS kann per URL-Parameter auf ein bestimmtes Anzeigeformat festgelegt
+werden. Das ist besonders für **Wanddisplays** nützlich, die fest
+montiert sind und immer dieselbe Orientierung haben.
+
+### 9.1 URL-Parameter
+
+| URL | Beschreibung |
+|---|---|
+| `http://<server>:<port>/` | Querformat (Standard, automatisch) |
+| `http://<server>:<port>/?view=landscape` | Querformat (explizit) |
+| `http://<server>:<port>/?view=portrait` | Hochkant (6 feste Spalten) |
+| `http://<server>:<port>/compat?view=portrait` | Hochkant im Compat-Modus |
+
+### 9.2 Unterschiede der Modi
+
+| | Querformat (landscape) | Hochkant (portrait) |
+|---|---|---|
+| **Spalten** | Automatisch (je nach Bildschirmbreite) | Fest 6 Spalten |
+| **Layout** | Standard-Anordnung der Widgets | Eigene Anordnung (unabhängig) |
+| **Compat-Modus** | 3 Widgets pro Zeile | 2 Widgets pro Zeile |
+
+### 9.3 Mehrere Wanddisplays
+
+Jedes Display kann seine eigene URL mit eigenem `?view=`-Parameter
+im Browser als Lesezeichen/Startseite eingerichtet haben:
+
+```
+Display Wohnzimmer (Querformat):  http://192.168.1.50:3001/?view=landscape
+Display Flur (Hochkant):          http://192.168.1.50:3001/?view=portrait
+Altes Tablet (Compat Hochkant):   http://192.168.1.50:3001/compat?view=portrait
+```
+
+Alle drei zeigen dieselben Seiten und Geräte — aber mit ihren jeweils
+gespeicherten Layout-Einstellungen.
+
+### 9.4 Hochkant-Layout bearbeiten
+
+1. Hochkant-URL im Browser öffnen (`?view=portrait`)
+2. Bearbeitungsmodus aktivieren (✏)
+3. Im Toggle **„📱 Hochkant"** auswählen (sollte bereits aktiv sein)
+4. Widgets per Drag & Drop in die gewünschte Reihenfolge bringen
+5. Über ⚙ am Widget die Größe für Hochkant festlegen
+6. Bearbeitungsmodus beenden — Layout wird automatisch gespeichert
+
+> **Tipp:** Du kannst auch vom Querformat aus das Hochkant-Layout bearbeiten —
+> einfach im Bearbeitungsmodus auf **„📱 Hochkant"** schalten. Das Gitter
+> wechselt auf 6 Spalten und zeigt das Hochkant-Layout zum Bearbeiten.
+
+---
+
+## 10. Themes (Designs)
 
 DOMDIS enthält fünf fertige Farbthemes. Das gewählte Theme wird auf allen
 Geräten gespeichert — auch im Kompatibilitätsmodus.
@@ -434,7 +523,7 @@ Geräten gespeichert — auch im Kompatibilitätsmodus.
 
 ---
 
-## 10. Automation
+## 11. Automation
 
 Alle Automations-Einstellungen befinden sich unter ⚙ → **„Automation"**.
 
@@ -475,7 +564,7 @@ Praktisch für Übersichts-Displays die unbeaufsichtigt laufen.
 
 ---
 
-## 11. Kompatibilitätsmodus für alte Geräte
+## 12. Kompatibilitätsmodus für alte Geräte
 
 Der Kompatibilitätsmodus ist speziell für ältere Browser und Geräte
 entwickelt. Er verwendet ausschließlich **ES5-JavaScript**, **jQuery 1.11**
@@ -492,7 +581,7 @@ und **tabellenbasiertes Layout** — keine modernen CSS- oder JS-Features.
 | Windows XP | Internet Explorer 9 (mit Einschränkungen) |
 | Alte Smart-TV-Browser | WebKit-basierte Browser |
 
-### 11.1 Kompatibilitätsmodus aufrufen
+### 12.1 Kompatibilitätsmodus aufrufen
 
 Es gibt **drei Wege**:
 
@@ -516,7 +605,7 @@ speichern (oder zur Startseite hinzufügen):
 http://192.168.1.50:3001/compat
 ```
 
-### 11.2 Als Web-App auf dem Homescreen (iOS / Android)
+### 12.2 Als Web-App auf dem Homescreen (iOS / Android)
 
 Auf dem Altgerät:
 
@@ -532,7 +621,7 @@ Das Dashboard startet dann ohne Browser-Adressleiste im Vollbild.
 1. URL im Browser öffnen
 2. Menü → **„Zum Startbildschirm hinzufügen"**
 
-### 11.3 Unterschiede zum modernen Modus
+### 12.3 Unterschiede zum modernen Modus
 
 | Funktion | Modern | Compat |
 |---|---|---|
@@ -544,14 +633,18 @@ Das Dashboard startet dann ohne Browser-Adressleiste im Vollbild.
 | RGB Farbwahl | Farbpalette | Farbfelder |
 | Seiten verwalten | ✓ | ✓ |
 | Geräte hinzufügen | ✓ | ✓ |
+| Leerfelder einfügen | ✓ | ✓ |
+| Nacht-Modus | ✓ | ✓ |
+| Vollbild-Button | ✓ | ✓ |
+| Hochkant-Modus (`?view=portrait`) | ✓ (6 Sp.) | ✓ (2 pro Zeile) |
+| Per-Orientierung Layout-Bearbeitung | ✓ | — |
 | Drag & Drop | ✓ | — |
 | Widget-Größen | ✓ | — |
 | Darstellungsarten | ✓ | — |
-| Nacht-Modus | ✓ | — |
 | Slideshow | ✓ | — |
 | CSS Grid Layout | ✓ | — (Tabellen) |
 
-### 11.4 Einstellungen im Kompatibilitätsmodus
+### 12.4 Einstellungen im Kompatibilitätsmodus
 
 Das Einstellungs-Panel öffnet sich über das **⚙-Symbol** oben rechts.
 
@@ -571,9 +664,9 @@ Folgende Abschnitte sind verfügbar:
 - **„+ Neue Seite"** → neue Seite anlegen
 - **✕** neben Seitenname → Seite löschen
 
-**AUTOMATION** — Home-Seite und Auto-Return konfigurieren
+**AUTOMATION** — Home-Seite, Auto-Return und Nacht-Modus konfigurieren
 
-### 11.5 jQuery-Fallback für offline-Szenarien
+### 12.5 jQuery-Fallback für offline-Szenarien
 
 Wenn das Altgerät keinen Internetzugang hat (kein CDN-Zugriff), lädt der
 Compat-Modus jQuery automatisch vom lokalen Server nach:
@@ -597,7 +690,7 @@ docker exec domdis wget -O /app/public/js/jquery-1.11.3.min.js \
 
 ---
 
-## 12. Kamera-Livebild
+## 13. Kamera-Livebild
 
 ### Wie es funktioniert
 
@@ -626,7 +719,7 @@ automatisch via `setInterval`. Funktioniert auf iOS 5, Android 4 und IE9.
 
 ---
 
-## 13. Fehlerbehebung
+## 14. Fehlerbehebung
 
 ### Dashboard lädt nicht
 
@@ -702,7 +795,7 @@ systemctl restart domdis
 
 ---
 
-## 14. Verzeichnisstruktur
+## 15. Verzeichnisstruktur
 
 ```
 domdis/
@@ -756,8 +849,10 @@ domdis/
 
 | URL | Beschreibung |
 |---|---|
-| `http://<server>:<port>/` | Modernes Dashboard |
-| `http://<server>:<port>/compat` | Kompatibilitätsmodus |
+| `http://<server>:<port>/` | Modernes Dashboard (Querformat) |
+| `http://<server>:<port>/?view=portrait` | Modernes Dashboard (Hochkant, 6 Spalten) |
+| `http://<server>:<port>/compat` | Kompatibilitätsmodus (Querformat) |
+| `http://<server>:<port>/compat?view=portrait` | Kompatibilitätsmodus (Hochkant, 2 pro Zeile) |
 | `http://<server>:<port>/?compat=1` | Weiterleitung zum Compat-Modus |
 | `http://<server>:<port>/api/settings` | Einstellungen (JSON) |
 | `http://<server>:<port>/api/pages` | Seiten & Widgets (JSON) |

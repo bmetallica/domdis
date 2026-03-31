@@ -734,6 +734,12 @@
   // ── Devices Tab ───────────────────────────────────────────────
   function bindDevicesTab() {
     document.getElementById('btn-load-devices').addEventListener('click', loadDevicesList);
+    document.getElementById('btn-add-spacer').addEventListener('click', async () => {
+      const pageId = document.getElementById('device-target-page').value;
+      if (!pageId) { alert('Bitte Seite auswählen.'); return; }
+      await API.addWidget(pageId, { deviceIdx: null, deviceName: 'Leerfeld', deviceType: 'spacer' });
+      await loadPages(); renderPages();
+    });
     document.querySelector('[data-tab="devices"]').addEventListener('click', () => {
       const sel = document.getElementById('device-target-page');
       sel.innerHTML = '';

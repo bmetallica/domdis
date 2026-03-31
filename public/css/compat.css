@@ -67,6 +67,8 @@ body {
 
 /* WIDGET CELLS */
 .widget-cell { vertical-align: top; }
+.widget-spacer { background: transparent !important; border: 1px dashed #1e1e30 !important;
+  cursor: default !important; min-height: 100px; }
 
 .widget {
   background: #111118;

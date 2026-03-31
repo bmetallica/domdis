@@ -65,6 +65,9 @@ const Widgets = (function () {
       { id: 'live',      label: 'Live-Bild', icon: '📷' },
       { id: 'overlay',   label: 'Mit Label', icon: '🔲' },
       { id: 'minimal',   label: 'Minimal',   icon: '▬' }
+    ],
+    spacer: [
+      { id: 'card', label: 'Leer', icon: '▢' }
     ]
   };
 
@@ -145,6 +148,15 @@ const Widgets = (function () {
   function render(widget, deviceState) {
     const wType = widget.deviceType || (deviceState ? classifyDevice(deviceState) : 'sensor');
     const dType = widget.displayType || 'card';
+
+    // Spacer — invisible placeholder, no device state needed
+    if (wType === 'spacer') {
+      const el = document.createElement('div');
+      el.className = 'widget widget-spacer';
+      el.dataset.widgetId = widget.id;
+      applySize(el, widget.size);
+      return el;
+    }
 
     // Cameras have no regular device state — render anyway
     if (wType === 'camera') {

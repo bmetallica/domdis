@@ -63,7 +63,7 @@ body {
 
 /* WIDGETS AREA */
 #widgets-area { padding: 8px; background: #0a0a0f; min-height: 400px; }
-#widget-table { border-collapse: separate; border-spacing: 8px; }
+#widget-table { border-collapse: separate; border-spacing: 8px; table-layout: fixed; width: 100%; }
 
 /* WIDGET CELLS */
 .widget-cell { vertical-align: top; }

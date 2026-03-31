@@ -174,23 +174,17 @@
       return;
     }
 
-    var rowsHtml = '';
     var COLS = (VIEW === 'portrait') ? (settings.portraitCols || 2) : 3;
-    for (var i = 0; i < widgets.length; i++) {
-      if (i % COLS === 0) rowsHtml += '<tr>';
-      var w = widgets[i];
-      var state = deviceStates[String(w.deviceIdx)] || null;
-      rowsHtml += '<td class="widget-cell">' + buildWidgetHtml(w, state) + '</td>';
-      if (i % COLS === COLS - 1) rowsHtml += '</tr>';
-    }
-    // Close last row if partial
-    if (widgets.length % COLS !== 0) {
-      var fill = COLS - (widgets.length % COLS);
-      for (var f = 0; f < fill; f++) rowsHtml += '<td></td>';
-      rowsHtml += '</tr>';
-    }
 
-    $('#widget-tbody').html(rowsHtml);
+    // Set equal-width colgroup so table-layout:fixed distributes evenly
+    var colHtml = '';
+    var colPct = (100 / COLS).toFixed(4) + '%';
+    for (var ci = 0; ci < COLS; ci++) { colHtml += '<col style="width:' + colPct + '">'; }
+    $('#widget-colgroup').html(colHtml);
+
+    // Place widgets using a cell-occupation matrix (handles colspan/rowspan)
+    var cells = placeWidgets(widgets, COLS);
+    $('#widget-tbody').html(buildTableRows(cells));
     bindWidgetEvents(page);
     startCamTimers(page);
   }
@@ -1072,6 +1066,84 @@
     var isNight = (start > end) ? (cur >= start || cur < end) : (cur >= start && cur < end);
     var brightness = nm.brightness !== undefined ? nm.brightness : 30;
     document.body.style.filter = isNight ? 'brightness(' + (brightness / 100) + ')' : '';
+  }
+
+  // ── Grid placement (colspan / rowspan) ───────────────────────
+  function sizeToSpan(size) {
+    var map = { '2x1': [2,1], '3x1': [3,1], '1x2': [1,2], '2x2': [2,2] };
+    return map[size] || [1,1];
+  }
+
+  function placeWidgets(widgets, COLS) {
+    var occupied = {};
+    var cells    = [];
+    var row = 0, col = 0;
+
+    function key(r, c) { return r + ',' + c; }
+    function isOcc(r, c) { return !!occupied[key(r, c)]; }
+    function mark(r, c, rs, cs) {
+      for (var rr = r; rr < r + rs; rr++)
+        for (var cc = c; cc < c + cs; cc++)
+          occupied[key(rr, cc)] = true;
+    }
+    function fits(r, c, rs, cs) {
+      if (c + cs > COLS) return false;
+      for (var rr = r; rr < r + rs; rr++)
+        for (var cc = c; cc < c + cs; cc++)
+          if (isOcc(rr, cc)) return false;
+      return true;
+    }
+    function skipOccupied() {
+      while (col < COLS && isOcc(row, col)) col++;
+      if (col >= COLS) { col = 0; row++; skipOccupied(); }
+    }
+
+    for (var i = 0; i < widgets.length; i++) {
+      var w = widgets[i];
+      var span = sizeToSpan(w.size);
+      var cs = Math.min(span[0], COLS);
+      var rs = span[1];
+
+      skipOccupied();
+      while (!fits(row, col, rs, cs)) {
+        col++;
+        if (col >= COLS) { col = 0; row++; }
+        skipOccupied();
+      }
+
+      cells.push({ row: row, col: col, colspan: cs, rowspan: rs, widget: w });
+      mark(row, col, rs, cs);
+      col += cs;
+      if (col >= COLS) { col = 0; row++; }
+    }
+    return cells;
+  }
+
+  function buildTableRows(cells) {
+    if (!cells.length) return '';
+    cells.sort(function (a, b) {
+      return a.row !== b.row ? a.row - b.row : a.col - b.col;
+    });
+    var maxRow = 0;
+    for (var i = 0; i < cells.length; i++) {
+      var er = cells[i].row + cells[i].rowspan - 1;
+      if (er > maxRow) maxRow = er;
+    }
+    var html = '';
+    for (var r = 0; r <= maxRow; r++) {
+      html += '<tr>';
+      for (var j = 0; j < cells.length; j++) {
+        var cell = cells[j];
+        if (cell.row !== r) continue;
+        var attrs = ' class="widget-cell"';
+        if (cell.colspan > 1) attrs += ' colspan="' + cell.colspan + '"';
+        if (cell.rowspan > 1) attrs += ' rowspan="' + cell.rowspan + '"';
+        var state = deviceStates[String(cell.widget.deviceIdx)] || null;
+        html += '<td' + attrs + '>' + buildWidgetHtml(cell.widget, state) + '</td>';
+      }
+      html += '</tr>';
+    }
+    return html;
   }
 
   // ── Helpers ───────────────────────────────────────────────────

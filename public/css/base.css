@@ -85,9 +85,9 @@ html, body {
   align-items: start;
 }
 
-/* Portrait view — fixed 6 columns */
+/* Portrait view — column count set via --portrait-cols (default 6) */
 body.view-portrait .widget-grid {
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(var(--portrait-cols, 6), 1fr);
 }
 
 /* Widget size spans */

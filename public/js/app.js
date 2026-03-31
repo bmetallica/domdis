@@ -45,6 +45,7 @@
     await loadSettings();
     await loadPages();
     applyTheme(settings.theme || 'cyberpunk');
+    applyPortraitCols(settings.portraitCols || 6);
     renderPages();
     await pollDevices();
     await loadCameras();
@@ -100,7 +101,13 @@
   function applyTheme(theme) {
     settings.theme = theme;
     document.getElementById('theme-css').href = `/css/themes/${theme}.css`;
-    document.body.className = `theme-${theme}`;
+    // Preserve view-* classes; only replace theme-* class
+    document.body.classList.forEach(c => { if (c.startsWith('theme-')) document.body.classList.remove(c); });
+    document.body.classList.add(`theme-${theme}`);
+  }
+
+  function applyPortraitCols(cols) {
+    document.documentElement.style.setProperty('--portrait-cols', parseInt(cols, 10) || 6);
   }
 
   // ── Page Rendering ────────────────────────────────────────────
@@ -618,6 +625,7 @@
     document.querySelectorAll('.theme-card').forEach(c => {
       c.classList.toggle('active', c.dataset.theme === settings.theme);
     });
+    document.getElementById('cfg-portrait-cols').value = settings.portraitCols || 6;
 
     document.getElementById('cfg-auto-return').value       = settings.autoReturnTimeout        || 30;
     document.getElementById('cfg-night-mode').checked      = settings.nightMode?.enabled        || false;
@@ -679,6 +687,21 @@
         applyTheme(card.dataset.theme);
         await API.saveSettings(settings);
       });
+    });
+
+    document.getElementById('cfg-portrait-cols').addEventListener('change', async function () {
+      const v = Math.max(2, Math.min(12, parseInt(this.value, 10) || 6));
+      this.value = v;
+      settings.portraitCols = v;
+      applyPortraitCols(v);
+      await API.saveSettings(settings);
+    });
+  }
+
+  function populateAppearanceTab() {
+    document.getElementById('cfg-portrait-cols').value = settings.portraitCols || 6;
+    document.querySelectorAll('.theme-card').forEach(c => {
+      c.classList.toggle('active', c.dataset.theme === settings.theme);
     });
   }
 

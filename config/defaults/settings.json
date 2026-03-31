@@ -19,5 +19,6 @@
     "enabled": false,
     "interval": 10
   },
-  "pollInterval": 3000
+  "pollInterval": 3000,
+  "portraitCols": 6
 }

@@ -175,7 +175,7 @@
     }
 
     var rowsHtml = '';
-    var COLS = (VIEW === 'portrait') ? 2 : 3;
+    var COLS = (VIEW === 'portrait') ? (settings.portraitCols || 2) : 3;
     for (var i = 0; i < widgets.length; i++) {
       if (i % COLS === 0) rowsHtml += '<tr>';
       var w = widgets[i];
@@ -897,6 +897,16 @@
       ajaxPost('/api/settings', settings, function () {}, function () {});
     });
 
+    $(document).on('click', '#btn-save-design', function () {
+      var cols = Math.max(2, Math.min(12, parseInt($('#cfg-portrait-cols').val(), 10) || 2));
+      $('#cfg-portrait-cols').val(cols);
+      settings.portraitCols = cols;
+      ajaxPost('/api/settings', settings, function () {
+        alert('Gespeichert \u2713');
+        renderCurrentPage(); // re-render with new COLS
+      });
+    });
+
     // Save automation
     $(document).on('click', '#btn-save-auto', function () {
       settings.autoReturnTimeout = parseInt($('#cfg-auto-return').val(), 10) || 30;
@@ -988,6 +998,7 @@
       $('#cfg-pass').val(settings.domoticz.password || '');
     }
     $('#cfg-theme').val(settings.theme || 'cyberpunk');
+    $('#cfg-portrait-cols').val(settings.portraitCols || (VIEW === 'portrait' ? 2 : 6));
     $('#cfg-auto-return').val(settings.autoReturnTimeout || 30);
     var nm = settings.nightMode || {};
     $('#cfg-night-mode').prop('checked', !!nm.enabled);

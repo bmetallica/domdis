@@ -58,7 +58,7 @@ Datei `docker-compose.yml` aus dem Repository kopieren oder direkt erstellen:
 ```yaml
 services:
   domdis:
-    image: 192.168.66.12:5000/bmetallica/domdis:latest
+    image: bmetallica/domdis:latest
     container_name: domdis
     restart: unless-stopped
     ports:
@@ -104,16 +104,6 @@ Erwartete Ausgabe beim ersten Start:
 Domdis Dashboard running on http://localhost:3001
 ```
 
-### 2.6 Image aus lokalem Registry
-
-Das Image liegt im lokalen Registry unter `192.168.66.12:5000`.
-Falls Docker beim Pull einen HTTPS-Fehler meldet, einmalig als root ausführen:
-
-```bash
-# /etc/docker/daemon.json anpassen:
-echo '{"insecure-registries":["192.168.66.12:5000"]}' > /etc/docker/daemon.json
-systemctl restart docker
-```
 
 ### 2.7 Container aktualisieren
 

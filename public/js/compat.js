@@ -15,6 +15,7 @@
   var currentPage    = 0;
   var pollTimer      = null;
   var autoReturnTimer = null;
+  var nightModeTimer  = null;
   var camTimers      = {};   // widget.id → setInterval handle
   var touchStartX    = 0;
 
@@ -28,6 +29,7 @@
           renderCurrentPage();
           startPolling();
           startAutoReturn();
+          startNightMode();
         });
       });
     });
@@ -877,9 +879,16 @@
     $(document).on('click', '#btn-save-auto', function () {
       settings.autoReturnTimeout = parseInt($('#cfg-auto-return').val(), 10) || 30;
       settings.homePage = $('#cfg-home-page').val() || null;
+      settings.nightMode = {
+        enabled:    $('#cfg-night-mode').prop('checked'),
+        startTime:  $('#cfg-night-start').val() || '22:00',
+        endTime:    $('#cfg-night-end').val()   || '06:00',
+        brightness: parseInt($('#cfg-night-brightness').val(), 10) || 30
+      };
       ajaxPost('/api/settings', settings, function () {
         alert('Gespeichert \u2713');
         startAutoReturn();
+        startNightMode();
       });
     });
   }
@@ -958,6 +967,11 @@
     }
     $('#cfg-theme').val(settings.theme || 'cyberpunk');
     $('#cfg-auto-return').val(settings.autoReturnTimeout || 30);
+    var nm = settings.nightMode || {};
+    $('#cfg-night-mode').prop('checked', !!nm.enabled);
+    $('#cfg-night-start').val(nm.startTime || '22:00');
+    $('#cfg-night-end').val(nm.endTime || '06:00');
+    $('#cfg-night-brightness').val(nm.brightness !== undefined ? nm.brightness : 30);
     populatePageDropdowns();
     updatePagesMgmtList();
   }
@@ -1004,6 +1018,27 @@
       }
       if (homeIdx >= 0 && homeIdx !== currentPage) goToPage(homeIdx);
     }, timeout);
+  }
+
+  // ── Night Mode ────────────────────────────────────────────────
+  function startNightMode() {
+    clearInterval(nightModeTimer);
+    checkNightMode();
+    nightModeTimer = setInterval(checkNightMode, 60000);
+  }
+
+  function checkNightMode() {
+    var nm = settings.nightMode || {};
+    if (!nm.enabled) { document.body.style.filter = ''; return; }
+    var now = new Date();
+    var cur = now.getHours() * 60 + now.getMinutes();
+    var startParts = (nm.startTime || '22:00').split(':');
+    var endParts   = (nm.endTime   || '06:00').split(':');
+    var start = parseInt(startParts[0], 10) * 60 + parseInt(startParts[1], 10);
+    var end   = parseInt(endParts[0],   10) * 60 + parseInt(endParts[1],   10);
+    var isNight = (start > end) ? (cur >= start || cur < end) : (cur >= start && cur < end);
+    var brightness = nm.brightness !== undefined ? nm.brightness : 30;
+    document.body.style.filter = isNight ? 'brightness(' + (brightness / 100) + ')' : '';
   }
 
   // ── Helpers ───────────────────────────────────────────────────
